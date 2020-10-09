@@ -1,17 +1,13 @@
-/*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018-2019 FIRST. All Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
-/*----------------------------------------------------------------------------*/
-
 package frc.robot;
 
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.commands.ExampleCommand;
-import frc.robot.subsystems.ExampleSubsystem;
-import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.Button;
+import frc.robot.subsystems.AcquisitionSubsystem;
+import frc.robot.subsystems.ClimberSubsystem;
+import frc.robot.subsystems.DrivebaseSubsystem;
+import frc.robot.subsystems.DrumSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
+import frc.robot.util.CommandToggler;
+import frc.robot.util.CommandToggler.CommandState;
 
 /**
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -20,38 +16,60 @@ import edu.wpi.first.wpilibj2.command.Command;
  * (including subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-  // The robot's subsystems and commands are defined here...
-  private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
+  @SuppressWarnings("unused")
+  private final static DrivebaseSubsystem m_drivebaseSubsystem = new DrivebaseSubsystem();
+  private final static AcquisitionSubsystem m_acquisitionSubsystem = new AcquisitionSubsystem();
+  private final static DrumSubsystem m_storageSubsystem = new DrumSubsystem();
+  private final static ShooterSubsystem m_shooterSubsystem = new ShooterSubsystem();
+  private final static ClimberSubsystem m_climberSubsystem = new ClimberSubsystem();
 
-  private final ExampleCommand m_autoCommand = new ExampleCommand(m_exampleSubsystem);
+  //private final static SendableChooser<Command> m_autoChooser = new SendableChooser<>();
 
-
-
-  /**
-   * The container for the robot.  Contains subsystems, OI devices, and commands.
-   */
   public RobotContainer() {
-    // Configure the button bindings
+    //m_autoChooser.setDefaultOption("Minimum Auto", new MinAutoCommand(m_storageSubsystem, m_shooterSubsystem, m_drivebaseSubsystem));
     configureButtonBindings();
   }
 
-  /**
-   * Use this method to define your button->command mappings.  Buttons can be created by
-   * instantiating a {@link GenericHID} or one of its subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a
-   * {@link edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-   */
   private void configureButtonBindings() {
-  }
+      //triggers 
+      new Button(OI::getXboxRightTriggerPressed).whenHeld(m_acquisitionSubsystem.cmdAcquireForwards());
+      new Button(OI::getXboxLeftTriggerPressed).whenHeld(m_acquisitionSubsystem.cmdAcquireBackwards());
 
+      new CommandToggler( // Acquirer Motor Toggle - Right Bumper
+          m_acquisitionSubsystem.cmdDeployAcquirer(),
+          m_acquisitionSubsystem.cmdRetractAcquirer()
+      )
+      .setDefaultState(CommandState.Interruptible)
+      .setToggleButton(OI::getXboxRightBumper)
+      .setCycle(true);
 
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
-  public Command getAutonomousCommand() {
-    // An ExampleCommand will run in autonomous
-    return m_autoCommand;
+      //--------------------------------------Shooter Buttons--------------------------------------------------------
+
+      new CommandToggler( // Shooter Motor Toggle - Left Bumper
+        m_shooterSubsystem.cmdStartShooter(),
+        m_shooterSubsystem.cmdStopShooter()
+      )
+      .setDefaultState(CommandState.Interruptible)
+      .setToggleButton(OI::getXboxLeftBumper)
+      .setCycle(true);
+
+      new Button(OI::getXboxAButton).whenHeld(m_storageSubsystem.cmdShootWhileHeld());
+
+      //new Button(OI.getright)
+
+      //--------------------------------------Elevator Buttons-------------------------------------------------------
+      
+      new CommandToggler( // Deploy/Retract Elevator toggle - start button
+        m_climberSubsystem.cmdDeployElevator(),
+        m_climberSubsystem.cmdRetractElevator()
+      )
+      .setDefaultState(CommandState.Interruptible)
+      .setToggleButton(OI::getXboxStartButton)
+      .setCycle(true);
+
+      new Button(OI::getXboxDpadUp).whenHeld(m_climberSubsystem.cmdRaiseElevator());
+      new Button(OI::getXboxDpadDown).whenHeld(m_climberSubsystem.cmdLowerElevator());
+
+      //--------------------------------------Dial Buttons-----------------------------------------------------------
   }
 }
